@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BuscaVuelo</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✈️</text></svg>">
+<style>
+:root{--bg:#f4f6fa;--card:#fff;--txt:#17202b;--muted:#667085;--line:#e4e8ef;--pri:#0b5cad;--pri-soft:#e8f1fb;
+--ok:#137a3f;--ok-soft:#e9f7ef;--shadow:0 1px 2px #0000000d,0 4px 16px #0000000a}
+@media (prefers-color-scheme:dark){:root{--bg:#0f141b;--card:#171e27;--txt:#e6ebf1;--muted:#98a2b3;--line:#263140;
+--pri:#5aa2ef;--pri-soft:#1a2c42;--ok:#3fa672;--ok-soft:#15301f;--shadow:none}}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--txt)}
+header{background:linear-gradient(120deg,#0b5cad,#0a3f7a);color:#fff;padding:28px 16px 68px}
+header h1,header p{margin:0 auto;max-width:1100px}
+header h1{font-size:26px} header p{margin-top:6px;opacity:.85}
+main{max-width:1100px;margin:-48px auto 40px;padding:0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+form.card{padding:18px;display:grid;grid-template-columns:1fr auto 1fr 1fr 1fr 100px;gap:14px;align-items:end}
+label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+input{font:inherit;color:var(--txt);background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 11px;width:100%}
+input:focus{outline:2px solid var(--pri);border-color:transparent}
+input.iata{text-transform:uppercase;font-weight:700;font-size:17px}
+.swap{border:1px solid var(--line);background:var(--card);color:var(--txt);border-radius:50%;width:40px;height:40px;cursor:pointer;font-size:17px}
+.fila2{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{flex-direction:row;text-transform:none;letter-spacing:0;font-size:14px}
+.chip input{position:absolute;opacity:0;width:0}
+.chip span{padding:8px 14px;border-radius:999px;border:1px solid var(--line);cursor:pointer;color:var(--txt);user-select:none}
+.chip input:checked+span{background:var(--pri-soft);border-color:var(--pri);color:var(--pri)}
+.chip input:focus-visible+span{outline:2px solid var(--pri)}
+button.go{font:inherit;font-weight:700;background:var(--pri);color:#fff;border:0;border-radius:10px;padding:11px 26px;cursor:pointer}
+button.go:disabled{opacity:.7;cursor:wait}
+.resumen{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin:18px 0}
+.resumen .card{padding:16px 18px;border-left:4px solid var(--ok)}
+.resumen small{color:var(--muted);font-weight:700;text-transform:uppercase;font-size:12px}
+.resumen .big{font-size:28px;font-weight:800;margin:2px 0}
+.barra{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin:6px 0 10px}
+.seg{display:inline-flex;align-items:center;gap:8px}
+.seg>span{font-size:13px;color:var(--muted)}
+.seg div{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+.seg button{font:inherit;font-size:14px;border:0;background:none;color:var(--txt);padding:8px 14px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--pri);color:#fff;font-weight:600}
+.muted{color:var(--muted)}
+table{width:100%;border-collapse:collapse}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);text-align:left;padding:12px 14px;border-bottom:1px solid var(--line)}
+td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+tr.top{background:var(--ok-soft)}
+.fecha{font-weight:700;white-space:nowrap}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--pri-soft);color:var(--pri);margin-top:4px}
+.tag.best{background:var(--ok);color:#fff}
+.precio{font-weight:800;font-size:17px}
+.sub{font-size:13px;color:var(--muted)}
+.na{color:var(--muted);font-size:13px}
+.vuelos{font-size:13px;color:var(--muted);white-space:nowrap}
+a.btn{display:inline-block;font-size:12px;font-weight:700;color:var(--pri);border:1px solid var(--pri);border-radius:8px;padding:2px 9px;text-decoration:none;margin-top:6px}
+.err{color:#c62828;font-weight:600;padding:14px 18px;margin-top:18px}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid #fff8;border-top-color:#fff;border-radius:50%;animation:g .8s linear infinite;vertical-align:-2px;margin-right:8px}
+@keyframes g{to{transform:rotate(360deg)}}
+@media (max-width:760px){
+ form.card{grid-template-columns:1fr auto 1fr}
+ form.card label.m{grid-column:span 3}
+ button.go{width:100%}
+ thead{display:none} table,tbody,tr,td{display:block;width:100%}
+ tr{border-bottom:1px solid var(--line);padding:8px 0} td{border:0;padding:5px 16px}
+ td[data-l]::before{content:attr(data-l);display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase}
+ .vuelos{white-space:normal}
+}
+</style>
+</head>
+<body>
+<header><h1>✈️ BuscaVuelo</h1><p>Fines de semana largos al mejor precio, en millas y en pesos</p></header>
+<main>
+<form class="card" id="f">
+ <label>Origen<input class="iata" name="origen" list="c" value="BUE" required pattern="[A-Za-z]{3}" maxlength="3"></label>
+ <button type="button" class="swap" id="swap" title="Invertir origen y destino" aria-label="Invertir origen y destino">⇄</button>
+ <label>Destino<input class="iata" name="destino" list="c" value="BRC" required pattern="[A-Za-z]{3}" maxlength="3"></label>
+ <label class="m">Desde<input type="month" name="desde" required></label>
+ <label class="m">Hasta<input type="month" name="hasta" required></label>
+ <label class="m">Pasajeros<input type="number" name="pax" min="1" max="9" value="3"></label>
+ <datalist id="c"></datalist>
+ <div class="fila2">
+  <div class="chips">
+   <label class="chip"><input type="checkbox" name="patrones" value="jue" checked><span>Jueves → Domingo</span></label>
+   <label class="chip"><input type="checkbox" name="patrones" value="vie" checked><span>Viernes → Lunes</span></label>
+  </div>
+  <button class="go">Buscar vuelos</button>
+ </div>
+</form>
+<div id="out"></div>
+</main>
+<script>
+const CIUDADES = {BUE:"Buenos Aires",BRC:"Bariloche",CPC:"San Martín de los Andes",EQS:"Esquel",MDZ:"Mendoza",
+  IGR:"Iguazú",FTE:"El Calafate",USH:"Ushuaia",SLA:"Salta",JUJ:"Jujuy",TUC:"Tucumán",COR:"Córdoba",NQN:"Neuquén",
+  REL:"Trelew",PMY:"Puerto Madryn",MDQ:"Mar del Plata",ROS:"Rosario",CRD:"Comodoro Rivadavia"};
+const PATRONES = {jue: 4, vie: 5};  // getUTCDay de la ida (0=dom)
+const DIAS = ["dom","lun","mar","mié","jue","vie","sáb"];
+const API = "https://api.aerolineas.com.ar/v1/flights/offers";
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = n => n.toLocaleString("es-AR");
+const fecha = iso => new Date(iso + "T00:00:00Z");
+const fechaCorta = iso => { const d = fecha(iso); return `${DIAS[d.getUTCDay()]} ${iso.slice(8)}/${iso.slice(5,7)}`; };
+const masDias = (iso, n) => new Date(fecha(iso).getTime() + n * 864e5).toISOString().slice(0, 10);
+
+// --- Fuente: Aerolíneas Argentinas ------------------------------------------------------------
+let tokenCache;
+async function tokenAerolineas() {
+  // El token anónimo viene embebido en el HTML de la home (dura ~24h).
+  try { const t = JSON.parse(localStorage.getItem("ar_token")); if (t && t.exp > Date.now() / 1000 + 600) return t.tok; } catch (e) {}
+  const h = await (await fetch("https://www.aerolineas.com.ar/")).text();
+  const tok = h.match(/ACCESS_TOKEN__\s*=\s*"([^"]+)"/)[1];
+  const exp = +(h.match(/TOKEN_EXPIRATION__\s*=\s*(\d+)/) || [0, 0])[1];
+  try { localStorage.setItem("ar_token", JSON.stringify({tok, exp})); } catch (e) {}
+  return tok;
+}
+
+async function aerolineas(origen, destino, mes, millas) {
+  const tok = await (tokenCache ??= tokenAerolineas());
+  const m = mes.replace("-", "");
+  const calendario = async (di, dv) => {
+    const p = new URLSearchParams([["adt",1],["inf",0],["chd",0],["flexDates","true"],["cabinClass","Economy"],
+      ["flightType","ROUND_TRIP"],["awardBooking",String(millas)],["leg",`${origen}-${destino}-${m}${di}`],["leg",`${destino}-${origen}-${m}${dv}`]]);
+    const r = await fetch(`${API}?${p}`, {headers: {Authorization: "Bearer " + tok, "X-Channel-Id": "WEB_AR", "Accept-Language": "es-AR"}});
+    if (!r.ok) throw new Error(`Aerolíneas respondió ${r.status}`);
+    return (await r.json()).calendarOffers || {};
+  };
+  // La API devuelve el mes pero solo con precios a ±15 días de cada fecha consultada y con
+  // ida <= vuelta. Por eso: una consulta para tener todas las idas y otra para todas las vueltas.
+  const [ci, cv] = await Promise.all([calendario("16", "28"), calendario("01", "16")]);
+  const parse = lista => Object.fromEntries((lista || []).filter(o => o.offerDetails && !o.soldOut).map(o => {
+    const det = o.offerDetails, seg = o.leg.segments;
+    return [o.departure, {precio: det.fare.total, tasas: det.fare.taxes,
+      vuelo: seg.map(s => s.airline + s.flightNumber).join("+"), hora: seg[0].departure.slice(11, 16),
+      ruta: `${seg[0].origin}-${seg.at(-1).destination}`}];
+  }));
+  return {ida: parse(ci["0"]), vuelta: parse(cv["1"])};
+}
+
+// Para sumar otra aerolínea: función con la misma firma y agregarla acá.
+const FUENTES = {aerolineas};
+
+// --- Búsqueda ---------------------------------------------------------------------------------
+function mesesEntre(desde, hasta) {
+  const out = [];
+  let [y, m] = desde.split("-").map(Number);
+  while (`${y}-${String(m).padStart(2, "0")}` <= hasta && out.length < 12) {
+    out.push(`${y}-${String(m).padStart(2, "0")}`);
+    [y, m] = m === 12 ? [y + 1, 1] : [y, m + 1];
+  }
+  return out;
+}
+
+async function buscar(origen, destino, meses, dias) {
+  const tareas = [];
+  for (const [fuente, fn] of Object.entries(FUENTES))
+    for (const [millas, unidad] of [[true, "millas"], [false, "ARS"]])
+      for (const mes of meses)
+        tareas.push(fn(origen, destino, mes, millas).then(r => ({fuente, unidad, ...r})));
+  const res = await Promise.allSettled(tareas);
+  const ok = res.filter(r => r.status === "fulfilled").map(r => r.value);
+  if (!ok.length) throw res[0].reason;
+
+  // Junta todos los meses por unidad y arma una fila por fin de semana (ida + 3 noches).
+  const hoy = new Date().toISOString().slice(0, 10), filas = {};
+  for (const unidad of ["millas", "ARS"]) {
+    const ida = {}, vuelta = {};
+    ok.filter(r => r.unidad === unidad).forEach(r => { Object.assign(ida, r.ida); Object.assign(vuelta, r.vuelta); });
+    for (const [fi, oi] of Object.entries(ida)) {
+      if (fi < hoy || !dias.has(fecha(fi).getUTCDay())) continue;
+      const fv = masDias(fi, 3), ov = vuelta[fv];
+      if (!ov) continue;
+      const f = filas[fi] ??= {ida: fi, vuelta: fv};
+      const total = oi.precio + ov.precio;
+      if (!f[unidad] || total < f[unidad].total) f[unidad] = {total, oi, ov, tasas: oi.tasas + ov.tasas};
+    }
+  }
+  return Object.values(filas);
+}
+
+// --- Render -----------------------------------------------------------------------------------
+function linkAerolineas(o, d, fi, fv, millas) {
+  const p = new URLSearchParams([["adt",1],["inf",0],["chd",0],["flexDates","true"],["cabinClass","Economy"],
+    ["flightType","ROUND_TRIP"],["leg",`${o}-${d}-${fi.replaceAll("-","")}`],["leg",`${d}-${o}-${fv.replaceAll("-","")}`]]);
+  if (millas) p.append("awardBooking", "true");
+  return "https://www.aerolineas.com.ar/flex-dates-calendar?" + p;
+}
+
+function celda(f, unidad, pax, o, d, mejor) {
+  const titulo = unidad === "millas" ? "Millas" : "Pesos", c = f[unidad];
+  if (!c) return `<td data-l="${titulo}" class="na">Sin disponibilidad</td>`;
+  const [precio, sub] = unidad === "millas"
+    ? [`${fmt(c.total)} millas`, `+ $${fmt(c.tasas)} en pesos · x${pax} = ${fmt(c.total * pax)} millas`]
+    : [`$${fmt(c.total)}`, `x${pax} = $${fmt(c.total * pax)}`];
+  const best = c.total === mejor ? '<span class="tag best">Más barato</span> ' : "";
+  return `<td data-l="${titulo}"><div class="precio">${precio}</div><div class="sub">${sub}</div>${best}` +
+    `<a class="btn" href="${esc(linkAerolineas(o, d, f.ida, f.vuelta, unidad === "millas"))}" target="_blank" rel="noopener">Ver en Aerolíneas ↗</a></td>`;
+}
+
+function render(filas, o, d, pax) {
+  if (!filas.length) return '<div class="card err">No se encontraron vuelos para esas fechas.</div>';
+  const mejor = {};
+  for (const u of ["ARS", "millas"]) mejor[u] = Math.min(...filas.filter(f => f[u]).map(f => f[u].total));
+  const tarjetas = [["ARS", "Más barato en pesos"], ["millas", "Menos millas"]].map(([u, titulo]) => {
+    const f = filas.find(f => f[u] && f[u].total === mejor[u]);
+    if (!f) return "";
+    const c = f[u];
+    const big = u === "ARS" ? `$${fmt(c.total)}` : `${fmt(c.total)} millas`;
+    const extra = u === "ARS" ? `$${fmt(c.total * pax)} para ${pax}` : `+ $${fmt(c.tasas)} en pesos, por persona`;
+    return `<div class="card"><small>${titulo}</small><div class="big">${big}</div>` +
+      `<div>${fechaCorta(f.ida)} → ${fechaCorta(f.vuelta)}</div><div class="sub">${extra}</div></div>`;
+  }).join("");
+  const t = x => esc(`${x.vuelo} · ${x.hora} · ${x.ruta}`);
+  const trs = filas.map(f => {
+    const c = f.ARS || f.millas, top = ["ARS", "millas"].some(u => f[u] && f[u].total === mejor[u]);
+    return `<tr class="${top ? "top" : ""}" data-fecha="${fecha(f.ida).getTime()}" data-ars="${f.ARS ? f.ARS.total : 1e15}" data-millas="${f.millas ? f.millas.total : 1e15}">` +
+      `<td data-l="Fin de semana"><div class="fecha">${fechaCorta(f.ida)} → ${fechaCorta(f.vuelta)}</div>` +
+      `<span class="tag">${fecha(f.ida).getUTCDay() === 4 ? "Jue → Dom" : "Vie → Lun"}</span></td>` +
+      celda(f, "ARS", pax, o, d, mejor.ARS) + celda(f, "millas", pax, o, d, mejor.millas) +
+      `<td data-l="Vuelos" class="vuelos">Ida: ${t(c.oi)}<br>Vuelta: ${t(c.ov)}</td></tr>`;
+  }).join("");
+  return `<div class="resumen">${tarjetas}</div>` +
+    `<div class="barra"><span class="muted">${esc(CIUDADES[o] || o)} ↔ ${esc(CIUDADES[d] || d)} · ${filas.length} fines de semana · precio por adulto, ida y vuelta</span>` +
+    `<div class="seg"><span>Ordenar por</span><div><button data-k="ars">Pesos</button><button data-k="millas">Millas</button><button data-k="fecha">Fecha</button></div></div></div>` +
+    `<div class="card"><table id="res"><thead><tr><th>Fin de semana</th><th>Pesos</th><th>Millas</th><th>Vuelos (el más barato del día)</th></tr></thead><tbody>${trs}</tbody></table></div>`;
+}
+
+function ordenar(k) {
+  const tb = $("#res tbody");
+  if (!tb) return;
+  document.querySelectorAll(".seg button").forEach(b => b.classList.toggle("on", b.dataset.k === k));
+  [...tb.rows].sort((a, b) => a.dataset[k] - b.dataset[k]).forEach(r => tb.appendChild(r));
+  try { localStorage.setItem("orden", k); } catch (e) {}
+}
+
+// --- Formulario -------------------------------------------------------------------------------
+const f = $("#f");
+$("#c").innerHTML = Object.entries(CIUDADES).map(([k, v]) => `<option value="${k}">${v}</option>`).join("");
+const hoy = new Date();
+f.desde.value = hoy.toISOString().slice(0, 7);
+f.hasta.value = new Date(hoy.getFullYear(), hoy.getMonth() + 3, 1).toISOString().slice(0, 7);
+$("#swap").onclick = () => [f.origen.value, f.destino.value] = [f.destino.value, f.origen.value];
+
+// Los parámetros quedan en la URL: se puede compartir o guardar una búsqueda.
+const qs = new URLSearchParams(location.search);
+for (const k of ["origen", "destino", "desde", "hasta", "pax"]) if (qs.get(k)) f[k].value = qs.get(k);
+if (qs.has("patrones")) f.querySelectorAll("[name=patrones]").forEach(c => c.checked = qs.getAll("patrones").includes(c.value));
+
+f.onsubmit = async e => {
+  e.preventDefault();
+  const o = f.origen.value.toUpperCase(), d = f.destino.value.toUpperCase();
+  const pax = Math.max(1, Math.min(9, +f.pax.value || 1));
+  const pats = [...f.querySelectorAll("[name=patrones]:checked")].map(c => c.value);
+  if (!pats.length) { $("#out").innerHTML = '<div class="card err">Elegí al menos un tipo de fin de semana.</div>'; return; }
+  history.replaceState(null, "", "?" + new URLSearchParams([["origen",o],["destino",d],["desde",f.desde.value],["hasta",f.hasta.value],["pax",pax],...pats.map(p => ["patrones",p])]));
+  const btn = f.querySelector(".go");
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Buscando…';
+  try {
+    const filas = await buscar(o, d, mesesEntre(f.desde.value, f.hasta.value), new Set(pats.map(p => PATRONES[p])));
+    $("#out").innerHTML = render(filas, o, d, pax);
+    document.querySelectorAll(".seg button").forEach(b => b.onclick = () => ordenar(b.dataset.k));
+    let k = "ars"; try { k = localStorage.getItem("orden") || "ars"; } catch (e) {}
+    ordenar(k);
+  } catch (err) {
+    $("#out").innerHTML = `<div class="card err">Error: ${esc(err.message || err)}</div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = "Buscar vuelos";
+  }
+};
+if (qs.has("origen")) f.requestSubmit();
+</script>
+</body>
+</html>
